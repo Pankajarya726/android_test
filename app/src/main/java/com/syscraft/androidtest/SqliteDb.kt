@@ -53,14 +53,14 @@ class SqliteDb(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
 
     }
 
-    fun getContact():ArrayList<Contact>{
-        val empList:ArrayList<Contact> = ArrayList<Contact>()
+    fun getContact(): ArrayList<Contact> {
+        val empList: ArrayList<Contact> = ArrayList<Contact>()
         val selectQuery = "SELECT  * FROM $TABLE_CONTACTS"
         val db = this.readableDatabase
         var cursor: Cursor? = null
-        try{
+        try {
             cursor = db.rawQuery(selectQuery, null)
-        }catch (e: SQLiteException) {
+        } catch (e: SQLiteException) {
             db.execSQL(selectQuery)
             return ArrayList()
         }
@@ -74,11 +74,23 @@ class SqliteDb(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
                 name = cursor.getString(cursor.getColumnIndex(CONTACT_NAME))
                 number = cursor.getString(cursor.getColumnIndex(CONTACT_NUMBER))
                 favorite = cursor.getInt(cursor.getColumnIndex(CONTACT_FAVORITE))
-                val emp= Contact(id = id.toString(), name = name, number = number,favorite = favorite)
+                val emp =
+                    Contact(id = id.toString(), name = name, number = number, favorite = favorite)
                 empList.add(emp)
             } while (cursor.moveToNext())
         }
         return empList
+    }
+
+    fun updateContact(contact: Contact): Int {
+        val db = this.writableDatabase
+        val contentValues = ContentValues()
+        contentValues.put(CONTACT_FAVORITE, contact.favorite)
+
+        val success =
+            db.update(TABLE_CONTACTS, contentValues, "$C_ID=" + Integer.parseInt(contact.id), null)
+        db.close()
+        return success
     }
 
 }

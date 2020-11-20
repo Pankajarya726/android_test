@@ -4,22 +4,20 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.databinding.DataBindingUtil
-import androidx.databinding.DataBindingUtil.inflate
 import androidx.recyclerview.widget.RecyclerView
 import com.syscraft.androidtest.databinding.RowContactBinding
 
 
 class ContactAdapter(
     context: Context,
-    contactList: ArrayList<Contact>,
-    listener: ContactListener
+    contactList: ArrayList<Contact>
 ) : RecyclerView.Adapter<ContactAdapter.ViewHolder>() {
 
 
     private var ctx = context
     private var contactList = contactList
-    private var listener = listener
     lateinit var contactBinding: RowContactBinding
 
     override fun onCreateViewHolder(
@@ -43,22 +41,56 @@ class ContactAdapter(
         holder.binding.txtName.text = contact.name
         holder.binding.txtNumber.text = contact.number
 
-        if(contact.favorite==1){
+        if (contact.favorite == 1) {
             holder.binding.imgFavorite.setImageResource(R.drawable.favorite)
-        }else{
+        } else {
             holder.binding.imgFavorite.setImageResource(R.drawable.unfavorite)
         }
 
 
         holder.binding.imgFavorite.setOnClickListener(View.OnClickListener {
 
-            if(contact.favorite==1){
+
+            val databaseHandler: SqliteDb = SqliteDb(context = ctx)
+
+            //calling the updateEmployee method of DatabaseHandler class to update record
+
+//            else{
+//                Toast.makeText(applicationContext,"id or name or email cannot be blank", Toast.LENGTH_LONG).show()
+//            }
+//
+            if (contact.favorite == 1) {
                 contactList[position].favorite = 0;
                 holder.binding.imgFavorite.setImageResource(R.drawable.unfavorite)
-            }else{
+                val status = databaseHandler.updateContact(
+                    Contact(
+                        id = contact.id,
+                        name = contact.name,
+                        number = contact.number,
+                        favorite = 0
+                    )
+                )
+                if (status > -1) {
+                    Toast.makeText(ctx, "Contact removed from favorite", Toast.LENGTH_LONG).show()
+                }
+
+            } else {
                 contactList[position].favorite = 1;
                 holder.binding.imgFavorite.setImageResource(R.drawable.favorite)
+                val status = databaseHandler.updateContact(
+                    Contact(
+                        id = contact.id,
+                        name = contact.name,
+                        number = contact.number,
+                        favorite = 1
+                    )
+                )
+                if (status > -1) {
+                    Toast.makeText(ctx, "Contact saved to favorite", Toast.LENGTH_LONG).show()
+                }
             }
+
+
 
             this.notifyItemChanged(position)
 
@@ -67,21 +99,17 @@ class ContactAdapter(
 
     }
 
-    fun removeItem(position: Int) {
-        contactList.removeAt(position)
+    fun filterList(filterdContact: ArrayList<Contact>) {
+        this.contactList = filterdContact
         notifyDataSetChanged()
-
-
     }
+
 
     class ViewHolder(binding: RowContactBinding) : RecyclerView.ViewHolder(binding.root) {
         var binding = binding
     }
 
 
-    interface ContactListener {
-        fun onFavoriteClick(contact: Contact);
 
-    }
 
 }

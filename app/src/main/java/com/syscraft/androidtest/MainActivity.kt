@@ -4,35 +4,75 @@ import android.Manifest
 import android.content.ContentResolver
 import android.content.pm.PackageManager
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.ContactsContract
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
-import android.widget.TextView
+import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
-class MainActivity : AppCompatActivity(), ContactAdapter.ContactListener {
+
+class MainActivity : AppCompatActivity() {
     companion object {
         val PERMISSIONS_REQUEST_READ_CONTACTS = 100
     }
 
     var rvContact: RecyclerView? = null
+    var searchEditText: EditText? = null
     private var contactAdapter: ContactAdapter? = null
-
-
     private var contactList: ArrayList<Contact>? = ArrayList()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         rvContact = findViewById<RecyclerView>(R.id.rv_contact)
+        searchEditText = findViewById<EditText>(R.id.editTextSearch)
         checkPermission()
-//        listContacts!!.setOnClickListener {
-//            loadContacts()
-//        }
+
+        searchEditText!!.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(
+                charSequence: CharSequence,
+                i: Int,
+                i1: Int,
+                i2: Int
+            ) {
+            }
+
+            override fun onTextChanged(
+                charSequence: CharSequence,
+                i: Int,
+                i1: Int,
+                i2: Int
+            ) {
+            }
+
+            override fun afterTextChanged(editable: Editable) {
+                //after the change calling the method and passing the search input
+                filter(editable.toString())
+            }
+        })
+
     }
 
+    private fun filter(text: String) {
+        //new array list that will hold the filtered data
+        val filterdConact: ArrayList<Contact> = ArrayList()
+
+        //looping through existing elements
+        for (c in contactList!!) {
+            //if the existing elements contains the search input
+            if (c.name.toLowerCase().contains(text.toLowerCase())) {
+                //adding the element to filtered list
+                filterdConact.add(c)
+            }
+        }
+
+        //calling a method of the adapter class and passing the filtered list
+        contactAdapter!!.filterList(filterdConact!!)
+    }
 
     private fun checkPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(
@@ -43,7 +83,6 @@ class MainActivity : AppCompatActivity(), ContactAdapter.ContactListener {
                 arrayOf(Manifest.permission.READ_CONTACTS),
                 PERMISSIONS_REQUEST_READ_CONTACTS
             )
-            //callback onRequestPermissionsResult
         } else {
 
 
@@ -54,39 +93,29 @@ class MainActivity : AppCompatActivity(), ContactAdapter.ContactListener {
     private fun loadContacts() {
 
 
-        //creating the instance of DatabaseHandler class
         val databaseHandler: SqliteDb = SqliteDb(this)
-        //calling the viewEmployee method of DatabaseHandler class to read the records
         contactList = databaseHandler.getContact()
 
         if (contactList != null && contactList!!.size > 0) {
 
             Log.e(javaClass.simpleName, "Total contact" + contactList!!.size.toString());
-            contactAdapter = ContactAdapter(this!!, contactList!!, this)
+            contactAdapter = ContactAdapter(this!!, contactList!!)
             rvContact!!.layoutManager = LinearLayoutManager(this)
             rvContact!!.hasFixedSize()
             rvContact!!.adapter = contactAdapter!!
+
+
+
+
+
+
+
 
         } else {
             getContacts()
         }
 
 
-//        var builder = StringBuilder()
-//        Log.e("tag", "laod Contact")
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(
-//                Manifest.permission.READ_CONTACTS
-//            ) != PackageManager.PERMISSION_GRANTED
-//        ) {
-//            requestPermissions(
-//                arrayOf(Manifest.permission.READ_CONTACTS),
-//                PERMISSIONS_REQUEST_READ_CONTACTS
-//            )
-//            //callback onRequestPermissionsResult
-//        } else {
-//
-//            listContacts!!.text = builder.toString()
-//        }
     }
 
     override fun onRequestPermissionsResult(
@@ -155,11 +184,6 @@ class MainActivity : AppCompatActivity(), ContactAdapter.ContactListener {
                                         "data :",
                                         "id : $id\t name : $name\t number : $number\t favorite : $favorite"
                                     );
-//                                    Toast.makeText(
-//                                        applicationContext,
-//                                        "record save",
-//                                        Toast.LENGTH_LONG
-//                                    ).show()
 
                                 }
                             } else {
@@ -170,26 +194,17 @@ class MainActivity : AppCompatActivity(), ContactAdapter.ContactListener {
                                 ).show()
                             }
 
-//                            builder.append("Contact: ").append(name).append(", Phone Number: ")
-//                                .append(
-//                                    phoneNumValue
-//                                ).append("\n\n")
-//                            Log.e("Name ===>", phoneNumValue);
                         }
                     }
                     cursorPhone.close()
                 }
-//                Log.e("Name ===>", phoneNumValue);
             }
         } else {
-            //   toast("No contacts available!")
         }
         cursor.close()
         return builder
 
     }
 
-    override fun onFavoriteClick(contact: Contact) {
-        TODO("Not yet implemented")
-    }
+
 }
